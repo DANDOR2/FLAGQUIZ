@@ -285,10 +285,17 @@ Para obtener autorización para usos comerciales, contacta al autor.
         }
 
         function startMusic() {
-            const music = document.getElementById("background-music");
-            music.play().then(() => {
-                startGame();
-            }).catch((error) => {
+    const music = document.getElementById("background-music");
+    document.getElementById("start-button").addEventListener("click", () => {
+        music.play().then(() => {
+            startGame();
+        }).catch((error) => {
+            console.log("Music playback failed:", error);
+            alert("Please allow audio playback to start the game.");
+            startGame();
+        });
+    });
+}).catch((error) => {
                 console.log("Music playback failed:", error);
                 alert("Please allow audio playback to start the game.");
             });
