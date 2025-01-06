@@ -1,0 +1,390 @@
+<!-- 
+Juego: FLAG QUIZ
+Autor: DANILO IBARRA ROSERO
+GitHub: DANDOR2
+
+Licencia: Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+https://creativecommons.org/licenses/by-nc/4.0/
+
+Términos de Uso:
+- Este juego y su código están protegidos bajo la licencia CC BY-NC 4.0.
+- Está permitido copiar, distribuir, modificar y usar este código con fines personales y educativos.
+- *No está permitido el uso comercial* de este código o del juego sin el permiso expreso del autor.
+- Debes dar crédito al autor original en cualquier redistribución.
+
+Para obtener autorización para usos comerciales, contacta al autor.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flag Quiz Game</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-align: center;
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .flag {
+            width: 100%;
+            max-width: 400px;
+            border: 5px solid #ccc;
+            border-radius: 10px;
+            margin: 20px auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        .options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .option {
+            padding: 15px;
+            border: 2px solid white;
+            background-color: #4caf50;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 1.2em;
+        }
+        .option:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        .score, .timer, .lives {
+            font-size: 1.5em;
+            margin: 10px;
+        }
+        .game-over {
+            font-size: 2em;
+            color: red;
+            display: none;
+        }
+        .win-screen {
+            display: none;
+            font-size: 2.5em;
+            color: gold;
+            text-shadow: 0 0 20px gold, 0 0 30px orange, 0 0 40px red;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+        .fireworks {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            display: none;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border: none;
+            background-color: #ff5722;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #e64a19;
+            transform: scale(1.1);
+        }
+        .container h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id='game-title'>Flag Quiz Challenge!</h1>
+        <div class="score">Score: <span id="score">0</span>/40</div>
+        <div class="lives">Lives: <span id="lives">3</span></div>
+        <div class="timer">Time left: <span id="timer">60</span> seconds</div>
+        <img id="flag" class="flag" src="" alt="Flag">
+        <div class="options">
+            <div class="option" onclick="checkAnswer(0)">Option 1</div>
+            <div class="option" onclick="checkAnswer(1)">Option 2</div>
+            <div class="option" onclick="checkAnswer(2)">Option 3</div>
+            <div class="option" onclick="checkAnswer(3)">Option 4</div>
+        </div>
+        <div class="game-over" id="game-over">Game Over!</div>
+        <div class='win-screen' id='win-screen' style='position: absolute; top: 10%; width: 100%; text-align: center; display: none;'>🎉 Congratulations! You Win! 🎉</div>
+        <canvas id="fireworks" class="fireworks"></canvas>
+        <button id="restart" style="display: none;" onclick="restartGame()">Restart</button>
+        <button id="start-button" style="font-size: 1.5em; padding: 15px 30px; background: linear-gradient(45deg, #ff5722, #e91e63); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 15px rgba(0,0,0,0.7)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.5)';" onclick="startMusic()">🚀 Start Game 🚀</button>
+    </div>
+
+    <audio id="background-music" loop>
+        <source src="./flagdan.ogg" type="audio/ogg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="option-sound">
+        <source src="./sfx-plastic68.ogg" type="audio/ogg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        const flags = [
+            { name: "Colombia", url: "https://flagcdn.com/w320/co.png" },
+            { name: "Brazil", url: "https://flagcdn.com/w320/br.png" },
+            { name: "United States", url: "https://flagcdn.com/w320/us.png" },
+            { name: "France", url: "https://flagcdn.com/w320/fr.png" },
+            { name: "Germany", url: "https://flagcdn.com/w320/de.png" },
+            { name: "Japan", url: "https://flagcdn.com/w320/jp.png" },
+            { name: "India", url: "https://flagcdn.com/w320/in.png" },
+            { name: "South Korea", url: "https://flagcdn.com/w320/kr.png" },
+            { name: "Italy", url: "https://flagcdn.com/w320/it.png" },
+            { name: "Canada", url: "https://flagcdn.com/w320/ca.png" },
+            { name: "Mexico", url: "https://flagcdn.com/w320/mx.png" },
+            { name: "Argentina", url: "https://flagcdn.com/w320/ar.png" },
+            { name: "Chile", url: "https://flagcdn.com/w320/cl.png" },
+            { name: "Australia", url: "https://flagcdn.com/w320/au.png" },
+            { name: "New Zealand", url: "https://flagcdn.com/w320/nz.png" },
+            { name: "United Kingdom", url: "https://flagcdn.com/w320/gb.png" },
+            { name: "Spain", url: "https://flagcdn.com/w320/es.png" },
+            { name: "Portugal", url: "https://flagcdn.com/w320/pt.png" },
+            { name: "Netherlands", url: "https://flagcdn.com/w320/nl.png" },
+            { name: "Belgium", url: "https://flagcdn.com/w320/be.png" },
+            { name: "Switzerland", url: "https://flagcdn.com/w320/ch.png" },
+            { name: "Russia", url: "https://flagcdn.com/w320/ru.png" },
+            { name: "China", url: "https://flagcdn.com/w320/cn.png" },
+            { name: "South Africa", url: "https://flagcdn.com/w320/za.png" },
+            { name: "Egypt", url: "https://flagcdn.com/w320/eg.png" },
+            { name: "Kenya", url: "https://flagcdn.com/w320/ke.png" },
+            { name: "Nigeria", url: "https://flagcdn.com/w320/ng.png" },
+            { name: "Sweden", url: "https://flagcdn.com/w320/se.png" },
+            { name: "Norway", url: "https://flagcdn.com/w320/no.png" },
+            { name: "Denmark", url: "https://flagcdn.com/w320/dk.png" },
+            { name: "Finland", url: "https://flagcdn.com/w320/fi.png" },
+            { name: "Poland", url: "https://flagcdn.com/w320/pl.png" },
+            { name: "Turkey", url: "https://flagcdn.com/w320/tr.png" },
+            { name: "Greece", url: "https://flagcdn.com/w320/gr.png" },
+            { name: "Czech Republic", url: "https://flagcdn.com/w320/cz.png" },
+            { name: "Hungary", url: "https://flagcdn.com/w320/hu.png" },
+            { name: "Israel", url: "https://flagcdn.com/w320/il.png" },
+            { name: "Saudi Arabia", url: "https://flagcdn.com/w320/sa.png" },
+            { name: "Thailand", url: "https://flagcdn.com/w320/th.png" }
+        ];
+
+        let score = 0;
+        let lives = 3;
+        let timer;
+        let timeLeft;
+        let currentFlag;
+        let correctIndex;
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            timeLeft = 60;
+            document.getElementById("score").textContent = score;
+            document.getElementById("lives").textContent = lives;
+            document.getElementById("timer").textContent = timeLeft;
+            document.getElementById("game-over").style.display = "none";
+            document.getElementById("win-screen").style.display = "none";
+            document.getElementById("fireworks").style.display = "none";
+            document.getElementById("restart").style.display = "none";
+            document.getElementById("start-button").style.display = "none";
+            const music = document.getElementById("background-music");
+            music.play();
+            nextFlag();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 60;
+            document.getElementById("timer").textContent = timeLeft;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    lives--;
+                    document.getElementById("lives").textContent = lives;
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        nextFlag();
+                        resetTimer();
+                    }
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            startTimer();
+        }
+
+        function nextFlag() {
+            const randomIndex = Math.floor(Math.random() * flags.length);
+            currentFlag = flags[randomIndex];
+            document.getElementById("flag").src = currentFlag.url;
+
+            const options = document.querySelectorAll(".option");
+            correctIndex = Math.floor(Math.random() * 4);
+
+            options.forEach((option, index) => {
+                if (index === correctIndex) {
+                    option.textContent = currentFlag.name;
+                } else {
+                    let randomOption;
+                    do {
+                        randomOption = flags[Math.floor(Math.random() * flags.length)].name;
+                    } while (randomOption === currentFlag.name);
+                    option.textContent = randomOption;
+                }
+            });
+        }
+
+        function checkAnswer(index) {
+            if (index === correctIndex) {
+                score++;
+                document.getElementById("score").textContent = score;
+                if (score >= 40) {
+                    winGame();
+                } else {
+                    nextFlag();
+                    resetTimer();
+                }
+            } else {
+                const sound = document.getElementById('option-sound');
+                sound.currentTime = 0;
+                sound.play();
+                lives--;
+                if (lives <= 0) {
+                    document.getElementById("lives").textContent = 0;
+                    endGame();
+                } else {
+                    document.getElementById("lives").textContent = lives;
+                    nextFlag();
+                    resetTimer();
+                }
+            }
+        }
+
+        function startMusic() {
+            const music = document.getElementById("background-music");
+            music.play().then(() => {
+                startGame();
+            }).catch((error) => {
+                console.log("Music playback failed:", error);
+                alert("Please allow audio playback to start the game.");
+            });
+        }
+
+        function restartGame() {
+            const music = document.getElementById("background-music");
+            music.play();
+            startGame();
+        }
+
+        function winGame() {
+            document.getElementById('game-title').textContent = '¡Ganaste, eres un genio!';
+            clearInterval(timer);
+            const music = document.getElementById("background-music");
+            music.pause();
+            music.currentTime = 0;
+            document.getElementById("win-screen").style.display = "block";
+            document.getElementById("game-title").style.color = "gold";
+            document.getElementById("fireworks").style.display = "block";
+            launchFireworks();
+            document.getElementById("restart").style.display = "inline-block";
+        }
+
+        function endGame() {
+            clearInterval(timer);
+            const music = document.getElementById("background-music");
+            music.pause();
+            music.currentTime = 0;
+            document.getElementById("game-over").style.display = "block";
+            document.getElementById("restart").style.display = "inline-block";
+        }
+
+        function launchFireworks() {
+            const canvas = document.getElementById("fireworks");
+            const ctx = canvas.getContext("2d");
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+
+            function createParticle(x, y, color) {
+                const particle = {
+                    x,
+                    y,
+                    size: Math.random() * 5 + 2,
+                    speedX: Math.random() * 4 - 2,
+                    speedY: Math.random() * 4 - 2,
+                    color
+                };
+                particles.push(particle);
+            }
+
+            function updateParticles() {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    p.size *= 0.95;
+
+                    if (p.size < 0.5) {
+                        particles.splice(i, 1);
+                    }
+                }
+            }
+
+            function drawParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                });
+            }
+
+            function animate() {
+                updateParticles();
+                drawParticles();
+
+                if (particles.length > 0) {
+                    requestAnimationFrame(animate);
+                }
+            }
+
+            setInterval(() => {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height / 2;
+                const colors = ["red", "blue", "yellow", "green", "orange", "purple"];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                for (let i = 0; i < 20; i++) {
+                    createParticle(x, y, color);
+                }
+                animate();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
