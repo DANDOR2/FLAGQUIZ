@@ -132,7 +132,7 @@ Para obtener autorización para usos comerciales, contacta al autor.
         <div class='win-screen' id='win-screen' style='position: absolute; top: 10%; width: 100%; text-align: center; display: none;'>🎉 Congratulations! You Win! 🎉</div>
         <canvas id="fireworks" class="fireworks"></canvas>
         <button id="restart" style="display: none;" onclick="restartGame()">Restart</button>
-        <button id="start-button" style="font-size: 1.5em; padding: 15px 30px; background: linear-gradient(45deg, #ff5722, #e91e63); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 6px 15px rgba(0,0,0,0.7)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 10px rgba(0,0,0,0.5)';" onclick="startMusic()">🚀 Start Game 🚀</button>
+        <button id="start-button" style="font-size: 1.5em; padding: 15px 30px; background: linear-gradient(45deg, #ff5722, #e91e63); color: white; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.3s ease, box-shadow 0.3s ease;">🚀 Start Game 🚀</button>
     </div>
 
     <audio id="background-music" loop>
@@ -206,11 +206,25 @@ Para obtener autorización para usos comerciales, contacta al autor.
             document.getElementById("fireworks").style.display = "none";
             document.getElementById("restart").style.display = "none";
             document.getElementById("start-button").style.display = "none";
-            const music = document.getElementById("background-music");
-            music.play();
             nextFlag();
             startTimer();
         }
+
+        function startMusic() {
+            const music = document.getElementById("background-music");
+            const startButton = document.getElementById("start-button");
+            startButton.addEventListener("click", () => {
+                music.play().then(() => {
+                    startGame();
+                }).catch((error) => {
+                    console.log("Music playback failed:", error);
+                    alert("Audio playback is blocked. Starting the game without audio.");
+                    startGame();
+                });
+            });
+        }
+
+        startMusic();
 
         function startTimer() {
             clearInterval(timer);
@@ -282,23 +296,6 @@ Para obtener autorización para usos comerciales, contacta al autor.
                     resetTimer();
                 }
             }
-        }
-
-        function startMusic() {
-    const music = document.getElementById("background-music");
-    document.getElementById("start-button").addEventListener("click", () => {
-        music.play().then(() => {
-            startGame();
-        }).catch((error) => {
-            console.log("Music playback failed:", error);
-            alert("Please allow audio playback to start the game.");
-            startGame();
-        });
-    });
-}).catch((error) => {
-                console.log("Music playback failed:", error);
-                alert("Please allow audio playback to start the game.");
-            });
         }
 
         function restartGame() {
